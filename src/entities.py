@@ -294,8 +294,9 @@ class Warehouse:
         future_pool = set([o for o in self.zudanPool if self.allBills[o]['deadline_time'] > currentJiedan])
         #
         if len(delayed_pool) > 0:
-            result = zudan.zudanXPY(self.allBills, pool=delayed_pool, stations=self.Stations, racks=self.Racks,
-                                    screen=0, currentTime=currentTime)
+            result = zudan.OrderAssign(self.allBills, pool=delayed_pool, stations=self.Stations, racks=self.Racks, screen=0, currentTime=currentTime)
+            #result = zudan.zudanXPY(self.allBills, pool=delayed_pool, stations=self.Stations, racks=self.Racks, screen=0, currentTime=currentTime)
+
             # cleanup
             zued_orders = self._zu_cleanup(result)
             # update delayed pool
@@ -316,8 +317,9 @@ class Warehouse:
                 SCREEN = 0
         #
         if len(second_pool) > 0:
-            result = zudan.zudanXPY(self.allBills, pool=second_pool, stations=self.Stations, racks=self.Racks,
-                                    screen=SCREEN, currentTime=currentTime)
+            result = zudan.OrderAssign(self.allBills, pool=delayed_pool, stations=self.Stations, racks=self.Racks, screen=0, currentTime=currentTime)
+            #result = zudan.zudanXPY(self.allBills, pool=second_pool, stations=self.Stations, racks=self.Racks, screen=SCREEN, currentTime=currentTime)
+
             # cleanup
             zued_orders = self._zu_cleanup(result)
             # update second pool
@@ -330,8 +332,9 @@ class Warehouse:
                 if len(second_pool) > 0:
                     return all_result
                 else:
-                    result = zudan.zudanXPY(self.allBills, pool=future_pool, stations=self.Stations, racks=self.Racks,
-                                            screen=1, currentTime=currentTime)
+                    result = zudan.OrderAssign(self.allBills, pool=delayed_pool, stations=self.Stations, racks=self.Racks, screen=0, currentTime=currentTime)
+                    #result = zudan.zudanXPY(self.allBills, pool=future_pool, stations=self.Stations, racks=self.Racks, screen=1, currentTime=currentTime)
+
                     # clean_up
                     zued_orders = self._zu_cleanup(result)
                     # update future_pool (skip,this zu is terminated regardless)

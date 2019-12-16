@@ -91,6 +91,7 @@ def getSKUS(f_dir):
 		SKUS[s]['volume'] = float(c['volume'])
 		SKUS[s]['weight'] = float(c['weight'])
 		SKUS[s]['clicks'] = float(c['clicks'])
+		SKUS[s]['band'] = c['band']
 	return SKUS
 
 #return all SKU correlations as a dict
@@ -176,22 +177,25 @@ outbound_bill
 '''
 
 def getOUTBOUND_BILLS(f_dir):
-	contents = readcsv(f_dir)
-	OUTBOUND_BILLS = {}
-	for c in contents:
-		BILL_ID = c['bill_no']
-		SKU = c['goods_no']
-		QTY = int(float(c['qty']))
-		if BILL_ID not in OUTBOUND_BILLS:
-			OUTBOUND_BILLS[BILL_ID] = {}
-			OUTBOUND_BILLS[BILL_ID]['process_type'] = int(c['process_type'])
-			OUTBOUND_BILLS[BILL_ID]['place_time'] = datetime.strptime(c['create_time'], "%Y/%m/%d %H:%M")
-			OUTBOUND_BILLS[BILL_ID]['deadline_time'] = datetime.strptime(c['deadline_time'], "%Y/%m/%d %H:%M")
-			OUTBOUND_BILLS[BILL_ID]['last_fail_time'] = datetime.strptime('2222-01-01 12:00:00', "%Y-%m-%d %H:%M:%S") #a super large time
-			OUTBOUND_BILLS[BILL_ID]['skus'] = {}
-			OUTBOUND_BILLS[BILL_ID]['status'] = -1
-		OUTBOUND_BILLS[BILL_ID]['skus'][SKU] = QTY
-	return OUTBOUND_BILLS
+    contents = readcsv(f_dir)
+    OUTBOUND_BILLS = {}
+    for c in contents:
+        BILL_ID = c['bill_no']
+        SKU = c['goods_no']
+        QTY = int(float(c['qty']))
+        if BILL_ID not in OUTBOUND_BILLS:
+            OUTBOUND_BILLS[BILL_ID] = {}
+            OUTBOUND_BILLS[BILL_ID]['process_type'] = int(c['process_type'])
+            OUTBOUND_BILLS[BILL_ID]['place_time'] = datetime.strptime(c['create_time'], "%Y/%m/%d %H:%M")
+            OUTBOUND_BILLS[BILL_ID]['deadline_time'] = datetime.strptime(c['deadline_time'], "%Y/%m/%d %H:%M")
+            OUTBOUND_BILLS[BILL_ID]['last_fail_time'] = datetime.strptime('2222-01-01 12:00:00', "%Y-%m-%d %H:%M:%S") #a super large time
+            OUTBOUND_BILLS[BILL_ID]['status'] = -1
+            OUTBOUND_BILLS[BILL_ID]['skus'] = {}
+            OUTBOUND_BILLS[BILL_ID]['bands'] = {}
+        OUTBOUND_BILLS[BILL_ID]['skus'][SKU] = QTY
+        ### NOTE: this is a bad definition, since {SKU:QTY} & {SKU:BAND} can be combined in one dict., but that would bring some other unforcast errors
+        OUTBOUND_BILLS[BILL_ID]['bands'][SKU] = c['band']
+    return OUTBOUND_BILLS
 
 #return all station-slot setup according to the provided files
 #this function is optional when running the web service,

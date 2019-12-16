@@ -20,7 +20,7 @@ def test2():
 
 @ScheduleApp.route('/init', methods=['GET', 'POST'])
 def init():
-    input_folder_path = './input/'
+    input_folder_path = '../input/'
     sku_path = input_folder_path + 'sku_info.csv'
     stock_path = input_folder_path + 'point.csv'
     rack_path = input_folder_path + 'container_stock.csv'
