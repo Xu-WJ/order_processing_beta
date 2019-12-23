@@ -7,6 +7,7 @@ from order_priority import *
 from datetime import datetime
 import itertools
 import random
+import time
 #import collections     # for python 2, collections.OrderedDict() used in OrderAssign(..)
 
 #used for subtract a datetime
@@ -717,8 +718,6 @@ def OrderAssign(all_bills, pool=[], stations={}, racks={}, currentTime='', scree
 
     # reinitialize the sku set [omega] for all stations
     for s in stations:      stations[s].omega.clear()
-    print('initialize stations is done')
-    
 
     dict_stat_slot = {}         # [dict]
     avl_slot_cnt = 0            # record the number of all the available slots
@@ -758,52 +757,77 @@ def OrderAssign(all_bills, pool=[], stations={}, racks={}, currentTime='', scree
     # {band_label: 0-bands, 1-req_slots_cnt, 2-req_skus_cnt, 3-{sku: [req_cnt, [ords]}}
     # note that: {'A': ['A','B'],...} & {'C': ['C'],...} 
     dict_band_sku = {b[0]: [b, 0, 0, {}] for b in band_types}
+    list_ord = []
     for ord in set_ord_ids:
+        if len(all_bills[ord]['bands']) == 1:
+            sku = list(all_bills[ord]['skus'].keys())[0]
+            band_key = all_bills[ord]['bands'][sku]
+            if band_key not in dict_band_sku.keys():    band_key = band_types[0][0]                         # transfer band 'B' to band 'A'
+
+            if not dict_band_sku[band_key][3].__contains__(sku): dict_band_sku[band_key][3][sku] = [0,[]]   # for python3
+            #if not dict_band_sku[band_key][3].has_key(sku): dict_band_sku[band_key][3][sku] = [0,[]]       # for python2
+            
+            dict_band_sku[band_key][3][sku][0] += all_bills[ord]['skus'][sku]
+            dict_band_sku[band_key][3][sku][1].append(ord)
+        else:
+            list_ord.append(ord)
+
+    '''
+    for ord in set_ord_ids:
+        
         is_assigned = False
         for sku in all_bills[ord]['skus'].keys():
             band_key = all_bills[ord]['bands'][sku]
-            # transfer band 'B' to band 'A'
-            if band_key not in dict_band_sku.keys():    band_key = band_types[0][0]
+            if band_key not in dict_band_sku.keys():    band_key = band_types[0][0]                         # transfer band 'B' to band 'A'
 
             if not dict_band_sku[band_key][3].__contains__(sku): dict_band_sku[band_key][3][sku] = [0,[]]   # for python3
             #if not dict_band_sku[band_key][3].has_key(sku): dict_band_sku[band_key][3][sku] = [0,[]]       # for python2
             dict_band_sku[band_key][3][sku][0] += all_bills[ord]['skus'][sku]
+
             # ensure the order requiring two diff. skus will only be assigned to one [dict_band_sku]
-            if is_assigned == False:
+            if not is_assigned:
                 dict_band_sku[band_key][3][sku][1].append(ord)
                 is_assigned = True
+    '''
 
     for b in dict_band_sku.keys():
         # update the total required count of the sku belonging to [cur_band]
         dict_band_sku[b][2] = np.sum(dict_band_sku[b][3][sku][0] for sku in dict_band_sku[b][3].keys())
+        
         # sort {sku:req_cnt, ords} in the nonincreasing order
-        # for python 2
-        #sorted_band_sku =         dict_band_sku[b][3] = collections.OrderDict()
-        #dict_band_sku[b][3] = dict(sorted(dict_band_sku[b][3].items(), key = lambda x:x[1][0], reverse = True))
-        #{v[0] : v[1] for v in sorted_band_sku}
+        ### for python 2
+        #sorted_band_sku = sorted(dict_band_sku[b][3].items(), key = lambda x:x[1][0], reverse = True)
+        #dict_band_sku[b][3] = collections.OrderedDict()
+        #for v in sorted_band_sku:
+        #    dict_band_sku[b][3][v[0]] = v[1]
 
-        # for python 3
+        ### for python 3
         dict_band_sku[b][3] = dict(sorted(dict_band_sku[b][3].items(), key = lambda x:x[1][0], reverse = True))
         for sku in dict_band_sku[b][3].keys():
             # sort orders for each sku by the required count & process_type in the nonincreasing order
             dict_band_sku[b][3][sku][1]= sorted(dict_band_sku[b][3][sku][1], key = lambda x: (all_bills[x]['skus'][sku], all_bills[x]['process_type']), reverse = True)
     
-    
-    # calculate available slots for each band
-    total_req_sku_cnt = np.sum(dict_band_sku[b][2] for b in dict_band_sku.keys())
-    for b in dict_band_sku.keys():
-        dict_band_sku[b][1] = int(0.5 + avl_slot_cnt * dict_band_sku[b][2] / total_req_sku_cnt)
-    print('define [dict_band_sku] is done')
-        
 
     # calculate order volume
     ord_volumes = {o : sum([racks[list(racks.keys())[0]].SKUS[sku]['volume'] * all_bills[o]['skus'][sku] for sku in all_bills[o]['skus']]) \
             for o in set_ord_ids}
     
-    break_sign = False          # break sign
+    is_break = False            # break sign
+    is_log = False              # log sign
     set_spreaded_sku = set()    # log skus that are spread on more than two stations
-    while break_sign == True:
+    while not is_break:
         #print('+++++++++++++++++++++++++++++++++++++++++')
+        # update the sku set [omega] for each station
+        for stat in stations:
+            stations[stat].omega.clear()
+            for slot in dict_stat_slot[stat]:
+                stations[stat].omega.update(set(dict_stat_slot[stat][slot]['sku']))
+        
+        # calculate available slots for each band
+        total_req_sku_cnt = np.sum(dict_band_sku[b][2] for b in dict_band_sku.keys())
+        for b in dict_band_sku.keys():
+            dict_band_sku[b][1] = int(0.5 + avl_slot_cnt * dict_band_sku[b][2] / total_req_sku_cnt)
+
 
         # PART I: for each slot at each station, assign orders into the slot
         for stat in stations:
@@ -813,9 +837,9 @@ def OrderAssign(all_bills, pool=[], stations={}, racks={}, currentTime='', scree
             for sa in stations:
                 for sb in stations:
                     if sb <= sa:  continue
-                    omega_intersection = (stations[sa].omega & stations[sb].omega)
-                    if len(omega_intersection) > 0:
-                        set_spreaded_sku.update(omega_intersection)
+                    cur_omega = (stations[sa].omega & stations[sb].omega)
+                    if len(cur_omega) > 0:
+                        set_spreaded_sku.update(cur_omega)
 
            
             # [cur_slot_cnt] is the number of aviable slots at currrent station
@@ -824,39 +848,42 @@ def OrderAssign(all_bills, pool=[], stations={}, racks={}, currentTime='', scree
             cur_band = dict_band_sku[band_key][0]
 
             for slot in dict_stat_slot[stat]:
+                if len(dict_stat_slot[stat][slot]['has'])>0:  continue
                 # break if all orders' requirements has been satisfied
                 if sum([len(dict_band_sku[b][3]) for b in dict_band_sku.keys()]) <= 0:
-                    break_sign = True
+                    is_break = True
                     print('all orders requirements have been satisfied')
                     break
                 
                 # switch to the next band if the assigned slots for cur_band is use up
-                if dict_band_sku[band_key][1] <= 0:
-                    band_key = max(dict_band_sku, key = lambda x: dict_band_sku[x][1]>0)
+                if (dict_band_sku[band_key][1] <= 0 or len(dict_band_sku[band_key][3]) <= 0):
+                    band_key = max(dict_band_sku, key = lambda x: (dict_band_sku[x][1]>0 and len(dict_band_sku[x][3])>0))
                     cur_band = dict_band_sku[band_key][0]
+
                 # update the avaiable slots for [cur_band]
                 dict_band_sku[band_key][1] -= 1
                
                 # find the first aviable sku for current slot
                 choosen_sku = ''
-                set_inter_sku = set(dict_band_sku[band_key][3].keys()) & stations[stat].omega
                     # option one - find all orders whose required skus are also in current omega
-                if len(set_inter_sku) > 0:
-                    choosen_sku = list(set_inter_sku)[0]
+                set_assigned_sku = set(dict_band_sku[band_key][3].keys()) & stations[stat].omega
+                if len(set_assigned_sku) > 0:
+                    choosen_sku = list(set_assigned_sku)[0]
                 else:
                     # option two - choose 1st sku that (1) is still required by some orders, and (2) is not spread in more than two stations
                     for sku in dict_band_sku[band_key][3].keys():
-                        if dict_band_sku[band_key][3][sku][0] > 0 and (sku not in set_spreaded_sku):
+                        if len(dict_band_sku[band_key][3][sku][1]) > 0 and (sku not in set_spreaded_sku):
                             choosen_sku = sku
                             break
                     # option three - choose 1st sku that even through it spreads in more than two stations
-                if len(choosen_sku) == 0:   choosen_sku = list(set_spreaded_sku)[0]
+                if len(choosen_sku) == 0:
+                    choosen_sku = list(set(dict_band_sku[band_key][3].keys()) & set_spreaded_sku)[0]
+                
 
-
+                #print(slot, choosen_sku, dict_band_sku[band_key][3][choosen_sku][0], len(dict_band_sku[band_key][3][choosen_sku][1]))
                 fill_ord_lmt = min(20, len(dict_band_sku[band_key][3][choosen_sku][1]))     # where 20 is the limit of a batch of mono-orders
                 break_point = 0
                 # assign orders to aviable slots sequentially
-                #print(slot, choosen_sku, dict_band_sku[band_key][3][choosen_sku][0], len(dict_band_sku[band_key][3][choosen_sku][1]))
                 for ord in dict_band_sku[band_key][3][choosen_sku][1]:
 
                     # update current slot
@@ -869,38 +896,39 @@ def OrderAssign(all_bills, pool=[], stations={}, racks={}, currentTime='', scree
                     stations[stat].omega.update(set(all_bills[ord]['skus'].keys()))
                     
                     # update [dict_band_sku]
+                    dict_band_sku[band_key][2] -= all_bills[ord]['skus'][choosen_sku]
                     dict_band_sku[band_key][3][choosen_sku][0] -= all_bills[ord]['skus'][choosen_sku]
 
-                    # break, 1) if current order is a multi-order(requiring single sku); 2) if current order is a mono-order and reeach the predefined limit
+                    # break, I) if current order is a multi-order(requiring single sku); II) if current order is a mono-order and reeach the predefined limit
                     break_point += 1
                     if (break_point >= fill_ord_lmt or all_bills[ord]['process_type'] == 1): break
                 
+                # delete orders that have been assigned
                 del dict_band_sku[band_key][3][choosen_sku][1][0:break_point]
 
                 # delete [choosen_sku] if all related orders have been assined
-                if len(dict_band_sku[band_key][3][choosen_sku][1]) == 0:
+                if len(dict_band_sku[band_key][3][choosen_sku][1]) <= 0:
                     dict_band_sku[band_key][3].pop(choosen_sku)
             
-            '''
-            with open(file_name, 'a') as file_obj:
-                file_obj.write("{}- ".format(slot))
-                for slot in dict_stat_slot[stat]:
-                    file_obj.write("{} {} ".format(slot, dict_stat_slot[stat][slot]['sku']))
-                file_obj.write("\n")
-            '''
+            if is_log:
+                with open(file_name, 'a') as file_obj:
+                    file_obj.write("{}--".format(stat))
+                    for slot in dict_stat_slot[stat]:
+                        file_obj.write("{} {} ".format(slot, dict_stat_slot[stat][slot]['sku']))
+                    file_obj.write("\n")
 
 
         # PART II: release part of the slots for the next round
+        avl_slot_cnt = 0
         for stat in stations:
-            stations[stat].omega.clear()
-            
             # free around 20% slots in current station 
-            free_slots = set()
-            while len(free_slots) < int(0.2*len(stations[stat].slots) + 0.5):
-                free_slots.add(random.randint(0, len(stations[stat].slots)-1))
+            cur_avl_slots = set()
+            while len(cur_avl_slots) < int(0.2*len(stations[stat].slots) + 0.5):
+                cur_avl_slots.add(random.randint(0, len(stations[stat].slots)-1))
+            avl_slot_cnt += len(cur_avl_slots)
             
             # reinitialize free slots
-            for slot in free_slots:
+            for slot in cur_avl_slots:
                 dict_stat_slot[stat][slot] = \
                     {'support':stations[stat].slots[slot]['support'], \
                     'des_support': stations[stat].slots[slot]['des_support'] ,\
@@ -915,7 +943,7 @@ def OrderAssign(all_bills, pool=[], stations={}, racks={}, currentTime='', scree
                     # zudan status: 0 for not zued,1 for zuing, 2 for finished
 
     
-    print('\n order assignment is done')
+    print('order assignment is done')
 
     # assigned slots that will be returned
     all_slots_ready = {}
