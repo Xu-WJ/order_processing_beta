@@ -3,7 +3,7 @@
 import sys
 import numpy as np
 sys.dont_write_bytecode = True
-from order_priority import * 
+from order_priority import *
 from datetime import datetime
 import itertools
 import random
@@ -74,7 +74,7 @@ def stationMultiFeasible(virSlots,multiSlots,staid = -1, otype = -1):
 		if virSlots[staid][slot]['des_support'][virSlots[staid][slot]['des_indicator']] == otype:
 			return 1, allMultislotsFinished + allMultislotsNoSupport
 		#for supported_type in virSlots[staid][slot]['des_support']:
-		#	if supported_type == otype: break #only consider those in front of 
+		#	if supported_type == otype: break #only consider those in front of
 		#	if label[staid][supported_type] <= 1: #this station have not finished a type of higher priority
 		#		Feasible = 0
 		#		break
@@ -82,7 +82,7 @@ def stationMultiFeasible(virSlots,multiSlots,staid = -1, otype = -1):
 	return 0,allMultislotsFinished + allMultislotsNoSupport
 
 
-# a multi slot is finished when all its supported order types have finished label in the station 
+# a multi slot is finished when all its supported order types have finished label in the station
 # actually this function also applies to mono slot, but that would be redudent as station mono label alone
 # can indicate its mono slots are finished.
 def slotMultiFinished(virSlots,label,staid=-1,slotid=-1):
@@ -91,7 +91,7 @@ def slotMultiFinished(virSlots,label,staid=-1,slotid=-1):
 			return 0
 	return 1
 
-	
+
 def cal_r(o,s,stations=0,bills=0):
 	temp = set(bills[o]['skus'].keys())
 	return len(temp&stations[s].omega)/float(len(temp))
@@ -115,7 +115,7 @@ def calculateOverlap(combinations,exceptions=0,stations=0,bills=0):
 	# 2nd round
 	for o,s in cleaned_combinations:
 		if bill_spreaded_limit[o] <= 0:	continue
-		
+
 		bill_spreaded_limit[o]-= 1
 		temp = set(bills[o]['skus'].keys())
 		R[(o,s)] = len(temp & stations[s].omega) / float(len(temp))
@@ -162,7 +162,7 @@ def zudanXPY(all_bills, pool=[], stations={}, racks={}, currentTime='', screen=0
 	'''
 	virSlots are all the available slots by station, it copies all the slot info and only used in zudan
 	monoSlots store all the slots that support only one type of order(monoslot) by station and order type
-	multiSlots store all the slots that support more than one type of order (multislot) by station 
+	multiSlots store all the slots that support more than one type of order (multislot) by station
 	'''
 	virSlots = {}
 	monoSlots = {} # by station by order type
@@ -214,7 +214,7 @@ def zudanXPY(all_bills, pool=[], stations={}, racks={}, currentTime='', screen=0
 	ORDER_VOLUMES = {}
 	for o in screenedOrders:
 		ORDER_VOLUMES[o] = sum([racks[list(racks.keys())[0]].SKUS[sku]['volume'] * all_bills[o]['skus'][sku] for sku in all_bills[o]['skus']])
-		#should upgrade to ORDER_VOLUMES[o] = all_bills[o]['volume'] 
+		#should upgrade to ORDER_VOLUMES[o] = all_bills[o]['volume']
 	#clear and initialize all labels
 	station_mono_labels = {} # to label MONO-support slots of a particular station INIT/ONHOLD/FINISHED choosing orders (BY TYPE)
 	station_multi_labels = {} # to label MULTI-support slots of a particular station INIT/ONHOLD/FINISHED choosing orders (BY TYPE)
@@ -227,7 +227,7 @@ def zudanXPY(all_bills, pool=[], stations={}, racks={}, currentTime='', screen=0
 			station_multi_labels[s][o] = 0
 	#ei3 label: order o can not be assigned to corresponding mono slot in station s
 	ei3_cannot_assigned = set() #use set for performance, no need to assign value
-	ei3_cannot_assigned_multi = set() 
+	ei3_cannot_assigned_multi = set()
 	#
 	OUTMOST_WHILE_COUNTER = 0
 	#print virSlots
@@ -245,7 +245,7 @@ def zudanXPY(all_bills, pool=[], stations={}, racks={}, currentTime='', screen=0
 		#
 		while (not allStationAllTypeOnholdFinished(station_mono_labels)) and len(screenedOrders)>0:
 			#print 'cycle A'
-			for o in ORDER_ORDER: #consider all types of orders based on the order type priority (descending) 
+			for o in ORDER_ORDER: #consider all types of orders based on the order type priority (descending)
 				#when such order do not exist: for all station, update station_mono_label of this type to FINISHED,
 				#update all mono slots of this type to finished
 				###a) calculate R
@@ -257,7 +257,7 @@ def zudanXPY(all_bills, pool=[], stations={}, racks={}, currentTime='', screen=0
 					continue
 				#such type of order exists, proceed
 				#need to choose supported station (CONDITIONS:1. )
-				supported_stations = [] # chosen by condition of mono slots, need to 
+				supported_stations = [] # chosen by condition of mono slots, need to
 				for sta in stations:
 					if stationMonoFeasible(virSlots,monoSlots,staid = sta,otype = o):
 						supported_stations.append(sta)
@@ -290,7 +290,7 @@ def zudanXPY(all_bills, pool=[], stations={}, racks={}, currentTime='', screen=0
 				MaxR = max(R.values())
 				bestOS = sorted([k for k in R if R[k]>=MaxR],\
 					key=lambda x: (len(all_bills[x[0]]['skus'].keys()),(BENCHMARK_DATETIME-all_bills[x[0]]['deadline_time']).total_seconds()),reverse=1)[0]
-				###d) if best R < 1, add to omega 
+				###d) if best R < 1, add to omega
 				sta_id = bestOS[1]
 				order_id = bestOS[0]
 				if R[bestOS] < 1:
@@ -341,7 +341,7 @@ def zudanXPY(all_bills, pool=[], stations={}, racks={}, currentTime='', screen=0
 						virSlots[sta_id][chosen_slot_id]['remain_vol'] -= orderVolume
 						#if volume is below zero or reach batch limit, then label the chosen slot as finished
 						if virSlots[sta_id][chosen_slot_id]['remain_vol'] <= 0 or len(virSlots[sta_id][chosen_slot_id]['has'])>=orderCountLimit:
-							virSlots[sta_id][chosen_slot_id]['zudan_status'] = 2 
+							virSlots[sta_id][chosen_slot_id]['zudan_status'] = 2
 						screenedOrders.remove(order_id)
 						screenedOrdersByType[o].remove(order_id)
 					else:
@@ -349,7 +349,7 @@ def zudanXPY(all_bills, pool=[], stations={}, racks={}, currentTime='', screen=0
 
 				else: #process this type of order o by oder
 					#selected an empty slot (zudan_status = 0)
-					#NOTE: the choice set cannot be zero as it is guaranteed by supported_stations 
+					#NOTE: the choice set cannot be zero as it is guaranteed by supported_stations
 					#and it is not possible to have slots with zudan_status 1 (zuing) when the order type is processed by order!
 					slot_choice_set = [slot for slot in monoSlots[sta_id][o] if virSlots[sta_id][slot]['zudan_status'] == 0]
 					chosen_slot_id = random.choice(slot_choice_set)
@@ -357,7 +357,7 @@ def zudanXPY(all_bills, pool=[], stations={}, racks={}, currentTime='', screen=0
 					virSlots[sta_id][chosen_slot_id]['has'].append(order_id)
 					virSlots[sta_id][chosen_slot_id]['order_type_assigned'] = o
 					virSlots[sta_id][chosen_slot_id]['zudan_status'] = 2
-					virSlots[sta_id][chosen_slot_id]['remain_vol'] = 0 #just set to 0 as it has finished 
+					virSlots[sta_id][chosen_slot_id]['remain_vol'] = 0 #just set to 0 as it has finished
 					screenedOrders.remove(order_id)
 					screenedOrdersByType[o].remove(order_id)
 				###f)for this selected station, after puting the order, update its status
@@ -379,7 +379,7 @@ def zudanXPY(all_bills, pool=[], stations={}, racks={}, currentTime='', screen=0
 				###a) calculate R
 				if len(screenedOrdersByType[o]) == 0:
 					for sta in stations:
-						station_multi_labels[sta][o] = 2 #finished 
+						station_multi_labels[sta][o] = 2 #finished
 						#need to check if multi slot of sta can be set to finished (can be skip in mono)
 						for slot in multiSlots[sta]:
 							current = virSlots[sta][slot]['des_indicator']
@@ -388,7 +388,7 @@ def zudanXPY(all_bills, pool=[], stations={}, racks={}, currentTime='', screen=0
 								if len(virSlots[sta][slot]['has']) > 0:
 									virSlots[sta][slot]['zudan_status'] = 2 # finish this slot
 								else: # if this slot has current o, but empty slot yet
-									if current < len(virSlots[sta][slot]['des_support']) - 1: #current is not last 
+									if current < len(virSlots[sta][slot]['des_support']) - 1: #current is not last
 										virSlots[sta][slot]['des_indicator'] += 1 # this slot can proceed to processing next priority
 									else: #current is last
 										virSlots[sta][slot]['zudan_status'] = 2
@@ -399,7 +399,7 @@ def zudanXPY(all_bills, pool=[], stations={}, racks={}, currentTime='', screen=0
 				#need to choose supported station
 				supported_stations = [] # chosen by condition of multi slots
 				for sta in stations:
-					if int(stations[sta].order_production_type[o]) == 0: #this station dont support 
+					if int(stations[sta].order_production_type[o]) == 0: #this station dont support
 						station_multi_labels[sta][o] = 2 #finished
 					else:
 						feas,fin = stationMultiFeasible(virSlots,multiSlots,staid = sta, otype = o)
@@ -515,7 +515,7 @@ def zudanXPY(all_bills, pool=[], stations={}, racks={}, currentTime='', screen=0
 						ei3_cannot_assigned_multi.add((order_id,sta_id))
 				else: #process this type of order o by oder
 				#selected an empty slot (zudan_status = 0)
-				#NOTE: the choice set cannot be zero as it is guaranteed by supported_stations 
+				#NOTE: the choice set cannot be zero as it is guaranteed by supported_stations
 				#and it is not possible to have slots with zudan_status 1 (zuing) when the order type is processed by order!
 					slot_choice_set = [slot for slot in multiSlots[sta_id] if (virSlots[sta_id][slot]['zudan_status'] == 0 and \
 					virSlots[sta_id][slot]['des_support'][virSlots[sta_id][slot]['des_indicator']] == o)]
@@ -524,17 +524,17 @@ def zudanXPY(all_bills, pool=[], stations={}, racks={}, currentTime='', screen=0
 					virSlots[sta_id][chosen_slot_id]['has'].append(order_id)
 					virSlots[sta_id][chosen_slot_id]['order_type_assigned'] = o
 					virSlots[sta_id][chosen_slot_id]['zudan_status'] = 2
-					virSlots[sta_id][chosen_slot_id]['remain_vol'] = 0 #just set to 0 as it has finished 
+					virSlots[sta_id][chosen_slot_id]['remain_vol'] = 0 #just set to 0 as it has finished
 					screenedOrders.remove(order_id)
 					screenedOrdersByType[o].remove(order_id)
 				###f) for this selected station, after puting the order, update its status
 				selected_feas,selected_fin = stationMultiFeasible(virSlots,multiSlots,staid = sta_id, otype = o)
-				if selected_fin>0: 
+				if selected_fin>0:
 					station_multi_labels[sta_id][o] = 2 #finished
 					#print 'selected station %s finished %s' %(sta_id,o)
 		################# 2) FOR ADD TO OMEGA #####################
-		#	for each station with onhold labels, ONE seed order is placed 
-		#	for a label with highest priority. 
+		#	for each station with onhold labels, ONE seed order is placed
+		#	for a label with highest priority.
 		###
 		S = set() # all stations share one common set
 		stations_with_onhold = {}
@@ -560,7 +560,7 @@ def zudanXPY(all_bills, pool=[], stations={}, racks={}, currentTime='', screen=0
 					choice_set = [slot for slot in monoSlots[sta][label[1]] if virSlots[sta][slot]['zudan_status'] <= 1]
 				else: # multi label
 					#need to consider CONDITION 1
-					#for those empty slots with higher priority indicator, 
+					#for those empty slots with higher priority indicator,
 					for slot in multiSlots[sta]:
 						if virSlots[sta][slot]['zudan_status'] == 0:
 							label_type_index = virSlots[sta][slot]['des_support'].index(label[1])
@@ -572,7 +572,7 @@ def zudanXPY(all_bills, pool=[], stations={}, racks={}, currentTime='', screen=0
 				#print sta,label,choice_set
 				if len(choice_set) == 0:
 					if label[0] == 1: station_mono_labels[sta][label[1]] = 2 # onhold label removed to finished as choice set empty
-					else: station_multi_labels[sta][label[1]] = 2 	
+					else: station_multi_labels[sta][label[1]] = 2
 					#print 'empty choice set: ',sta,label
 					#for a in virSlots[sta]:
 					#	print virSlots[sta][a]
@@ -586,7 +586,7 @@ def zudanXPY(all_bills, pool=[], stations={}, racks={}, currentTime='', screen=0
 					#need to consider volume
 					fitOrders = [o for o in screenedOrdersByType[label[1]] if virSlots[sta][most_empty_slot]['remain_vol'] >= ORDER_VOLUMES[o]]
 				#print fitOrders
-				#set slot order count limit 
+				#set slot order count limit
 				orderCountLimit = 10
 				if label[1] == SINGLE: orderCountLimit = stations[sta].single_batch_size
 				if label[1] == NO_MERGE: orderCountLimit = stations[sta].no_merge_batch_size
@@ -600,7 +600,7 @@ def zudanXPY(all_bills, pool=[], stations={}, racks={}, currentTime='', screen=0
 							virSlots[sta][slot]['zudan_status'] = 2 # mono slot of this type finished(as no order can ever fit into any of them)
 					else:
 						station_multi_labels[sta][label[1]] = 2 # onhold label removed(changed to finished)
-						#need to check if multi slot of sta can be set to finished 
+						#need to check if multi slot of sta can be set to finished
 						for slot in choice_set:
 							current = virSlots[sta][slot]['des_indicator']
 							#print 'please check',current,virSlots[sta][slot]['des_support']
@@ -634,7 +634,7 @@ def zudanXPY(all_bills, pool=[], stations={}, racks={}, currentTime='', screen=0
 					else:
 						virSlots[sta][most_empty_slot]['has'].append(seed_order)
 						virSlots[sta][most_empty_slot]['order_type_assigned'] = label[1]
-						virSlots[sta][most_empty_slot]['zudan_status'] = 2 
+						virSlots[sta][most_empty_slot]['zudan_status'] = 2
 						virSlots[sta][most_empty_slot]['remain_vol'] = 0 #just set to 0 as it has finished
 						screenedOrders.remove(seed_order)
 						screenedOrdersByType[label[1]].remove(seed_order)
@@ -650,7 +650,7 @@ def zudanXPY(all_bills, pool=[], stations={}, racks={}, currentTime='', screen=0
 					#check if this station is finished
 					if MONO:
 						if not stationMonoFeasible(virSlots,monoSlots,staid = sta, otype = label[1]):
-							station_mono_labels[sta][o] = 2 #finished					
+							station_mono_labels[sta][o] = 2 #finished
 					else:
 						selected_feas,selected_fin = stationMultiFeasible(virSlots,multiSlots,staid = sta, otype = label[1])
 						if selected_fin>0: station_multi_labels[sta][label[1]] = 2 #finished
@@ -713,7 +713,7 @@ def zudanXPY(all_bills, pool=[], stations={}, racks={}, currentTime='', screen=0
 
 
 def OrderAssign(all_bills, pool=[], stations={}, racks={}, currentTime='', screen=0):
-    
+
     print('order assignment begin')
 
     # reinitialize the sku set [omega] for all stations
@@ -725,7 +725,7 @@ def OrderAssign(all_bills, pool=[], stations={}, racks={}, currentTime='', scree
         # find all available slots
         cur_avl_slots = [slot for slot in stations[stat].type1_slots + stations[stat].type2_slots if stations[stat].slots[slot]['status'] == 0]
         avl_slot_cnt += len(cur_avl_slots)
-        
+
         # initialize all the available slots
         dict_stat_slot[stat] = {}
         for slot in cur_avl_slots:
@@ -743,22 +743,24 @@ def OrderAssign(all_bills, pool=[], stations={}, racks={}, currentTime='', scree
                 # zudan status: 0 for not zued,1 for zuing, 2 for finished
 
     print('find all avaiable slots is done')
-    
-    
-    set_ord_ids = set(pool)          # all the orders in the pool to be processed 
+
+
+    set_ord_ids = set(pool)          # all the orders in the pool to be processed
     set_sku_ids = set(list(all_bills[o]['skus'].keys())[0] for o in set_ord_ids)
-    
+
     # in this project, bands 'A' & 'B' are similar, and different from 'C'
     band_types = [['A','B'], ['C']]
     #band_types = set([all_bills[k]['band'] for k in set_ord_ids])
-    
+
     # calculate the number of goods needed to be processed for each band and store the calculated info into [dict_band_sku]
-    # NOTE, [dict_band_sku] can be regarded as a CLASS, and is defined with the following pattern
+    # NOTE, [dict_band_sku] can be regarded as a CLASS storing mono-sku order, and is defined with the following pattern
     # {band_label: 0-bands, 1-req_slots_cnt, 2-req_skus_cnt, 3-{sku: [req_cnt, [ords]}}
-    # note that: {'A': ['A','B'],...} & {'C': ['C'],...} 
+    # further: {'A': ['A','B'],...} & {'C': ['C'],...}
     dict_band_sku = {b[0]: [b, 0, 0, {}] for b in band_types}
-    list_ord = []
+    # NOTE, [dict_sku_ord] can be regarded as a CLASS storing multi-sku order, and is defined with the pattern of {sku: [orders]}
+    dict_sku_ord = {}
     for ord in set_ord_ids:
+        # for mono-sku orders
         if len(all_bills[ord]['bands']) == 1:
             sku = list(all_bills[ord]['skus'].keys())[0]
             band_key = all_bills[ord]['bands'][sku]
@@ -766,15 +768,18 @@ def OrderAssign(all_bills, pool=[], stations={}, racks={}, currentTime='', scree
 
             if not dict_band_sku[band_key][3].__contains__(sku): dict_band_sku[band_key][3][sku] = [0,[]]   # for python3
             #if not dict_band_sku[band_key][3].has_key(sku): dict_band_sku[band_key][3][sku] = [0,[]]       # for python2
-            
+
             dict_band_sku[band_key][3][sku][0] += all_bills[ord]['skus'][sku]
             dict_band_sku[band_key][3][sku][1].append(ord)
+
+        # for multi-sku orders
         else:
-            list_ord.append(ord)
+            for sku in all_bills[ord]['skus'].keys():
+                if not dict_sku_ord.__contains__(sku):  dict_sku_ord[sku] = []
+                dict_sku_ord[sku].append(ord)
 
     '''
     for ord in set_ord_ids:
-        
         is_assigned = False
         for sku in all_bills[ord]['skus'].keys():
             band_key = all_bills[ord]['bands'][sku]
@@ -789,11 +794,10 @@ def OrderAssign(all_bills, pool=[], stations={}, racks={}, currentTime='', scree
                 dict_band_sku[band_key][3][sku][1].append(ord)
                 is_assigned = True
     '''
-
     for b in dict_band_sku.keys():
         # update the total required count of the sku belonging to [cur_band]
         dict_band_sku[b][2] = np.sum(dict_band_sku[b][3][sku][0] for sku in dict_band_sku[b][3].keys())
-        
+
         # sort {sku:req_cnt, ords} in the nonincreasing order
         ### for python 2
         #sorted_band_sku = sorted(dict_band_sku[b][3].items(), key = lambda x:x[1][0], reverse = True)
@@ -806,32 +810,47 @@ def OrderAssign(all_bills, pool=[], stations={}, racks={}, currentTime='', scree
         for sku in dict_band_sku[b][3].keys():
             # sort orders for each sku by the required count & process_type in the nonincreasing order
             dict_band_sku[b][3][sku][1]= sorted(dict_band_sku[b][3][sku][1], key = lambda x: (all_bills[x]['skus'][sku], all_bills[x]['process_type']), reverse = True)
-    
+
+    # for python2
+    #sorted_sku_ord = sorted(dict_sku_ord.items(), key = lambda x:len(x[1]), reverse = True)
+    #dict_sku_ord = collections.OrderedDict()
+    #for v in sorted_sku_ord:   dict_sku_ord[v[0]] = v[1]
+
+    dict_sku_ord = dict(sorted(dict_sku_ord.items(), key = lambda x:len(x[1]), reverse = True))
+    for sku in dict_sku_ord.keys():
+        dict_sku_ord[sku] = sorted(dict_sku_ord[sku], key = lambda x: (len(all_bills[x]['skus']), -sum([all_bills[x]['skus'][k] for k in all_bills[x]['skus'].keys()])))
+
 
     # calculate order volume
-    ord_volumes = {o : sum([racks[list(racks.keys())[0]].SKUS[sku]['volume'] * all_bills[o]['skus'][sku] for sku in all_bills[o]['skus']]) \
-            for o in set_ord_ids}
-    
+    ord_volumes = {o : sum([racks[list(racks.keys())[0]].SKUS[sku]['volume'] * all_bills[o]['skus'][sku] \
+                            for sku in all_bills[o]['skus']]) for o in set_ord_ids}
+
+
     is_break = False            # break sign
     is_log = False              # log sign
+    is_2nd_stage = False        # the sign switching the 2nd stage, i.e., satisfying multi-sku orders
+    cur_band = ''               # used in the 1st stage
+    cur_sku = ''                # used in both stages
+    cur_orders = []
     set_spreaded_sku = set()    # log skus that are spread on more than two stations
+    t_start = time.time()
     while not is_break:
-        #print('+++++++++++++++++++++++++++++++++++++++++')
         # update the sku set [omega] for each station
         for stat in stations:
             stations[stat].omega.clear()
             for slot in dict_stat_slot[stat]:
                 stations[stat].omega.update(set(dict_stat_slot[stat][slot]['sku']))
-        
+
         # calculate available slots for each band
-        total_req_sku_cnt = np.sum(dict_band_sku[b][2] for b in dict_band_sku.keys())
-        for b in dict_band_sku.keys():
-            dict_band_sku[b][1] = int(0.5 + avl_slot_cnt * dict_band_sku[b][2] / total_req_sku_cnt)
+        if not is_2nd_stage:
+            total_req_sku_cnt = np.sum(dict_band_sku[b][2] for b in dict_band_sku.keys())
+            for b in dict_band_sku.keys():
+                dict_band_sku[b][1] = int(0.5 + avl_slot_cnt * dict_band_sku[b][2] / total_req_sku_cnt)
 
 
         # PART I: for each slot at each station, assign orders into the slot
         for stat in stations:
-            
+
             # find the skus spreaded on more than two stations
             set_spreaded_sku.clear()
             for sa in stations:
@@ -841,75 +860,97 @@ def OrderAssign(all_bills, pool=[], stations={}, racks={}, currentTime='', scree
                     if len(cur_omega) > 0:
                         set_spreaded_sku.update(cur_omega)
 
-           
-            # [cur_slot_cnt] is the number of aviable slots at currrent station
-            band_key = max(dict_band_sku, key = lambda x: dict_band_sku[x][1]>0)
-            # [cur_band] is for searching for target goods with this band;
-            cur_band = dict_band_sku[band_key][0]
 
             for slot in dict_stat_slot[stat]:
                 if len(dict_stat_slot[stat][slot]['has'])>0:  continue
+
                 # break if all orders' requirements has been satisfied
-                if sum([len(dict_band_sku[b][3]) for b in dict_band_sku.keys()]) <= 0:
-                    is_break = True
-                    print('all orders requirements have been satisfied')
-                    break
-                
-                # switch to the next band if the assigned slots for cur_band is use up
-                if (dict_band_sku[band_key][1] <= 0 or len(dict_band_sku[band_key][3]) <= 0):
-                    band_key = max(dict_band_sku, key = lambda x: (dict_band_sku[x][1]>0 and len(dict_band_sku[x][3])>0))
-                    cur_band = dict_band_sku[band_key][0]
+                if (not is_2nd_stage) and sum([len(dict_band_sku[b][3]) for b in dict_band_sku.keys()]) <= 0:
+                    is_2nd_stage = True
+                    print('all mono-sku orders are done')
+                if is_2nd_stage and len(dict_sku_ord) <= 0:
+                    is_break = True;    break
 
-                # update the avaiable slots for [cur_band]
-                dict_band_sku[band_key][1] -= 1
-               
-                # find the first aviable sku for current slot
-                choosen_sku = ''
-                    # option one - find all orders whose required skus are also in current omega
-                set_assigned_sku = set(dict_band_sku[band_key][3].keys()) & stations[stat].omega
-                if len(set_assigned_sku) > 0:
-                    choosen_sku = list(set_assigned_sku)[0]
+                cur_orders.clear()
+                if not is_2nd_stage:
+                    # STAGE 1, satisfying orders in [dict_band_sku]
+                    # S1- determine cur_band
+                    # switch to the next band if the assigned slots for cur_band is use up
+                    cur_band = max(dict_band_sku, key = lambda x: (dict_band_sku[x][1]>0 and len(dict_band_sku[x][3])>0))
+
+                    # update the avaiable slots
+                    dict_band_sku[cur_band][1] -= 1
+
+                    # S2- determine cur_sku
+                        # option one - find all orders whose required skus are also in current omega
+                    set_assigned_sku = set(dict_band_sku[cur_band][3].keys()) & stations[stat].omega
+                    if len(set_assigned_sku) > 0:   cur_sku = list(set_assigned_sku)[0]
+                        # option two - choose 1st sku that (1) is still required by some orders, and (2) is not spread in more than two stations
+                    else:   cur_sku = next((sku for sku in dict_band_sku[cur_band][3].keys()\
+                                            if (len(dict_band_sku[cur_band][3][sku][1]) > 0 and (sku not in set_spreaded_sku))), '')
+                        # option three - choose 1st sku that even through it spreads in more than two stations
+                    if len(cur_sku) == 0:   cur_sku = list(dict_band_sku[cur_band][3].keys())[0]
+
+                    #print(slot, cur_sku, dict_band_sku[cur_band][3][cur_sku][0], len(dict_band_sku[cur_band][3][cur_sku][1]))
+
+                    fill_ord_lmt = min(20, len(dict_band_sku[cur_band][3][cur_sku][1]))     # where 20 is the limit of a batch of mono-orders
+                    break_point = 0
+                    # assign orders to aviable slots sequentially
+                    for ord in dict_band_sku[cur_band][3][cur_sku][1]:
+
+                        # update [dict_band_sku]
+                        dict_band_sku[cur_band][2] -= all_bills[ord]['skus'][cur_sku]
+                        dict_band_sku[cur_band][3][cur_sku][0] -= all_bills[ord]['skus'][cur_sku]
+
+                        # break, I) if current order is a multi-order(requiring single sku); II) if current order is a mono-order and reeach the predefined limit
+                        break_point += 1
+                        if (break_point >= fill_ord_lmt or all_bills[ord]['process_type'] == 1): break
+
+                    # add the assigned orders
+                    cur_orders.extend(dict_band_sku[cur_band][3][cur_sku][1][0:break_point])
+
+                    # delete the assigned orders
+                    del dict_band_sku[cur_band][3][cur_sku][1][0:break_point]
+
+                    # delete [cur_sku] if all related orders have been assined
+                    if len(dict_band_sku[cur_band][3][cur_sku][1]) <= 0:
+                        dict_band_sku[cur_band][3].pop(cur_sku)
+
                 else:
-                    # option two - choose 1st sku that (1) is still required by some orders, and (2) is not spread in more than two stations
-                    for sku in dict_band_sku[band_key][3].keys():
-                        if len(dict_band_sku[band_key][3][sku][1]) > 0 and (sku not in set_spreaded_sku):
-                            choosen_sku = sku
-                            break
-                    # option three - choose 1st sku that even through it spreads in more than two stations
-                if len(choosen_sku) == 0:
-                    choosen_sku = list(set(dict_band_sku[band_key][3].keys()) & set_spreaded_sku)[0]
-                
+                    # STAGE 2, satisfying orders in [dict_sku_ord]
+                    set_assigned_sku = set(dict_sku_ord.keys()) & stations[stat].omega
+                        # option one - find all orders whose required skus are also in current omega
+                    if len(set_assigned_sku) > 0:   cur_sku = list(set_assigned_sku)[0]
+                        # option two - choose 1st sku that (1) is still required by some orders, and (2) is not spread in more than two stations
+                    else:    cur_sku = next((sku for sku in dict_sku_ord.keys() if (len(dict_sku_ord[sku]) > 0 and (sku not in set_spreaded_sku))), '')
+                        # option three - choose 1st sku that even through it spreads in more than two stations
+                    if len(cur_sku) == 0:   cur_sku = list(dict_sku_ord.keys())[0]
 
-                #print(slot, choosen_sku, dict_band_sku[band_key][3][choosen_sku][0], len(dict_band_sku[band_key][3][choosen_sku][1]))
-                fill_ord_lmt = min(20, len(dict_band_sku[band_key][3][choosen_sku][1]))     # where 20 is the limit of a batch of mono-orders
-                break_point = 0
+                    cur_ord = dict_sku_ord[cur_sku][0]
+                    # add the assigned orders
+                    cur_orders.append(cur_ord)
+
+                    #print(slot, cur_sku, cur_ord, len(dict_sku_ord[cur_sku]))
+
+                    # delete the assigned orders
+                    for sku in all_bills[cur_ord]['skus'].keys():
+                        dict_sku_ord[sku].remove(cur_ord)
+                        # delete [cur_sku] if all related orders have been assigned
+                        if len(dict_sku_ord[sku])<=0:   dict_sku_ord.pop(sku)
+
+
                 # assign orders to aviable slots sequentially
-                for ord in dict_band_sku[band_key][3][choosen_sku][1]:
-
+                for ord in cur_orders:
                     # update current slot
                     dict_stat_slot[stat][slot]['has'].append(ord)
-                    dict_stat_slot[stat][slot]['sku'] = list(all_bills[ord]['skus'].keys())
+                    dict_stat_slot[stat][slot]['sku'].extend(list(all_bills[ord]['skus'].keys()))
                     dict_stat_slot[stat][slot]['zudan_status'] = 1
                     dict_stat_slot[stat][slot]['remain_vol'] -= ord_volumes[ord]
 
                     # update the sku set [omega] at current station
                     stations[stat].omega.update(set(all_bills[ord]['skus'].keys()))
-                    
-                    # update [dict_band_sku]
-                    dict_band_sku[band_key][2] -= all_bills[ord]['skus'][choosen_sku]
-                    dict_band_sku[band_key][3][choosen_sku][0] -= all_bills[ord]['skus'][choosen_sku]
 
-                    # break, I) if current order is a multi-order(requiring single sku); II) if current order is a mono-order and reeach the predefined limit
-                    break_point += 1
-                    if (break_point >= fill_ord_lmt or all_bills[ord]['process_type'] == 1): break
-                
-                # delete orders that have been assigned
-                del dict_band_sku[band_key][3][choosen_sku][1][0:break_point]
 
-                # delete [choosen_sku] if all related orders have been assined
-                if len(dict_band_sku[band_key][3][choosen_sku][1]) <= 0:
-                    dict_band_sku[band_key][3].pop(choosen_sku)
-            
             if is_log:
                 with open(file_name, 'a') as file_obj:
                     file_obj.write("{}--".format(stat))
@@ -921,12 +962,12 @@ def OrderAssign(all_bills, pool=[], stations={}, racks={}, currentTime='', scree
         # PART II: release part of the slots for the next round
         avl_slot_cnt = 0
         for stat in stations:
-            # free around 20% slots in current station 
+            # free around 20% slots in current station
             cur_avl_slots = set()
             while len(cur_avl_slots) < int(0.2*len(stations[stat].slots) + 0.5):
                 cur_avl_slots.add(random.randint(0, len(stations[stat].slots)-1))
             avl_slot_cnt += len(cur_avl_slots)
-            
+
             # reinitialize free slots
             for slot in cur_avl_slots:
                 dict_stat_slot[stat][slot] = \
@@ -942,7 +983,9 @@ def OrderAssign(all_bills, pool=[], stations={}, racks={}, currentTime='', scree
                     # des_indicator initially point to the top priority type in des_support
                     # zudan status: 0 for not zued,1 for zuing, 2 for finished
 
-    
+    t_end = time.time()
+    print('duration is ', t_end - t_start)
+
     print('order assignment is done')
 
     # assigned slots that will be returned
@@ -952,6 +995,5 @@ def OrderAssign(all_bills, pool=[], stations={}, racks={}, currentTime='', scree
             all_slots_ready[(stat,slot)] = dict_stat_slot[stat][slot]['has']
 
     return all_slots_ready
-
 
 

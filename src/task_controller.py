@@ -2,19 +2,14 @@ from flask import Flask
 from flask import request
 import readfile
 import entities
-#from zudan import *
 import pandas as pd
 
 
 ScheduleApp = Flask(__name__)
 PORT = 1111
 
-@ScheduleApp.route('/test1', methods=['GET', 'POST'])
-def test1():
-    return 'test1 Success！'
-
-@ScheduleApp.route('/test2', methods=['GET', 'POST'])
-def test2():
+@ScheduleApp.route('/test', methods=['GET', 'POST'])
+def test():
     res = request.get_data()
     return res
 
